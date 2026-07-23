@@ -1,8 +1,9 @@
 import type { LucideIcon } from "lucide-react";
+import { memo } from "react";
 
 import { cn } from "@/lib/utils";
 
-export function MetricCard({
+export const MetricCard = memo(function MetricCard({
   label,
   value,
   detail,
@@ -46,4 +47,4 @@ export function MetricCard({
       </p>
     </article>
   );
-}
+});

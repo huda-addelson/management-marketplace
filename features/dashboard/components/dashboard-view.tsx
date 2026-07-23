@@ -10,6 +10,7 @@ import {
   WalletCards,
 } from "lucide-react";
 import Link from "next/link";
+import { useMemo } from "react";
 
 import { MetricCard } from "@/components/common/metric-card";
 import { PageHeader } from "@/components/common/page-header";
@@ -42,6 +43,36 @@ export default function DashboardPage() {
   const dashboardData = dashboardQuery.data;
   const fees = feesQuery.data;
   const settings = settingsQuery.data;
+
+  const productInsights = useMemo(
+    () =>
+      dashboardData?.topProducts.map((product) => {
+        try {
+          return { product, pricing: fees ? calculateProductPrice(product, fees) : null };
+        } catch {
+          return { product, pricing: null };
+        }
+      }) ?? [],
+    [dashboardData?.topProducts, fees],
+  );
+
+  const feeChart = useMemo(
+    () =>
+      fees
+        ? fees
+            .filter(
+              (fee) =>
+                fee.active &&
+                !fee.archivedAt &&
+                fee.kind === "percentage" &&
+                fee.defaultForProducts,
+            )
+            .map((fee) => ({ name: fee.name, value: fee.value }))
+        : [],
+    [fees],
+  );
+
+  const topProducts = useMemo(() => productInsights.filter((item) => item.pricing), [productInsights]);
 
   const header = (
     <PageHeader
@@ -106,25 +137,6 @@ export default function DashboardPage() {
   }
 
   const summary = dashboardData;
-  const productInsights = summary.topProducts.map((product) => {
-    try {
-      return { product, pricing: calculateProductPrice(product, fees) };
-    } catch {
-      return { product, pricing: null };
-    }
-  });
-
-  const feeChart = fees
-    .filter(
-      (fee) =>
-        fee.active &&
-        !fee.archivedAt &&
-        fee.kind === "percentage" &&
-        fee.defaultForProducts,
-    )
-    .map((fee) => ({ name: fee.name, value: fee.value }));
-
-  const topProducts = productInsights.filter((item) => item.pricing);
   const lowStockProducts = summary.lowStockProducts;
   const isFetching =
     dashboardQuery.isFetching || feesQuery.isFetching || settingsQuery.isFetching;

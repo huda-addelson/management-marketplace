@@ -1,6 +1,3 @@
-import Papa from "papaparse";
-import readXlsxFile from "read-excel-file/browser";
-
 import { calculateSale, resolveFees } from "@/features/pricing/utils/pricing.utils";
 import { createId, parseCurrency } from "@/lib/utils";
 import type { FeeRule, Product, Sale } from "@/types/domain";
@@ -40,6 +37,7 @@ export const emptySalesMapping: SalesColumnMapping = {
 
 export async function parseTabularFile(file: File): Promise<ParsedSheet[]> {
   if (file.name.toLocaleLowerCase().endsWith(".csv")) {
+    const Papa = (await import("papaparse")).default;
     const content = await file.text();
     const parsed = Papa.parse<unknown[]>(content, {
       skipEmptyLines: false,
@@ -50,6 +48,7 @@ export async function parseTabularFile(file: File): Promise<ParsedSheet[]> {
     return [{ name: file.name.replace(/\.csv$/i, ""), rows: parsed.data }];
   }
 
+  const readXlsxFile = (await import("read-excel-file/browser")).default;
   const sheets = await readXlsxFile(file);
   return sheets.map((sheet) => ({ name: sheet.sheet, rows: sheet.data }));
 }

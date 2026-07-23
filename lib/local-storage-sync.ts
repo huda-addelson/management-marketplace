@@ -26,6 +26,8 @@ export function loadFromLocalStorage<T>(key: string): T | null {
   }
 }
 
+const FLUSH_DELAY_MS = 300;
+
 export function persistStore<T>(options: PersistOptions<T>, store: StoreApi<T>): Unsubscribe {
   if (typeof window === "undefined") return () => {};
 
@@ -35,8 +37,22 @@ export function persistStore<T>(options: PersistOptions<T>, store: StoreApi<T>):
     store.setState(saved as T, true);
   }
 
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  let pendingState: unknown = null;
+
+  const flush = () => {
+    timer = null;
+    if (pendingState !== null) {
+      const envelope: PersistEnvelope = { state: pendingState, version: 1 };
+      localStorage.setItem(name, JSON.stringify(envelope));
+      pendingState = null;
+    }
+  };
+
   return store.subscribe((state) => {
-    const envelope: PersistEnvelope = { state: select(state), version: 1 };
-    localStorage.setItem(name, JSON.stringify(envelope));
+    pendingState = select(state);
+    if (timer === null) {
+      timer = setTimeout(flush, FLUSH_DELAY_MS);
+    }
   });
 }

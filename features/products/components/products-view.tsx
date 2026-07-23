@@ -67,15 +67,19 @@ export default function ProductsPage() {
     (query) => query.isFetching && query.data !== undefined,
   );
 
-  const calculations = new Map(
-    products.map((product) => {
-      if (!fees || feesQuery.isError) return [product.id, null] as const;
-      try {
-        return [product.id, calculateProductPrice(product, fees)] as const;
-      } catch {
-        return [product.id, null] as const;
-      }
-    }),
+  const calculations = useMemo(
+    () =>
+      new Map(
+        products.map((product) => {
+          if (!fees || feesQuery.isError) return [product.id, null] as const;
+          try {
+            return [product.id, calculateProductPrice(product, fees)] as const;
+          } catch {
+            return [product.id, null] as const;
+          }
+        }),
+      ),
+    [products, fees, feesQuery.isError],
   );
 
   const openCreate = () => {
